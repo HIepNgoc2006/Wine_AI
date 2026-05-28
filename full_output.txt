@@ -1,0 +1,411 @@
+
+🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷
+  HỆ THỐNG PHÂN LOẠI CHẤT LƯỢNG RƯỢU VANG
+  Wine Quality Classification System
+🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷
+
+======================================================================
+PHẦN 1: TẢI VÀ KHÁM PHÁ DỮ LIỆU
+======================================================================
+
+📊 Kích thước dữ liệu: 1143 mẫu × 12 cột
+
+📋 Danh sách cột:
+    1. fixed acidity (dtype: float64)
+    2. volatile acidity (dtype: float64)
+    3. citric acid (dtype: float64)
+    4. residual sugar (dtype: float64)
+    5. chlorides (dtype: float64)
+    6. free sulfur dioxide (dtype: float64)
+    7. total sulfur dioxide (dtype: float64)
+    8. density (dtype: float64)
+    9. pH (dtype: float64)
+   10. sulphates (dtype: float64)
+   11. alcohol (dtype: float64)
+   12. quality (dtype: int64)
+
+📈 Thống kê mô tả:
+       fixed acidity  volatile acidity  citric acid  residual sugar  chlorides  free sulfur dioxide  total sulfur dioxide   density        pH  sulphates   alcohol   quality
+count       1143.000          1143.000     1143.000        1143.000   1143.000             1143.000              1143.000  1143.000  1143.000   1143.000  1143.000  1143.000
+mean           8.311             0.531        0.268           2.532      0.087               15.615                45.915     0.997     3.311      0.658    10.442     5.657
+std            1.748             0.180        0.197           1.356      0.047               10.250                32.782     0.002     0.157      0.170     1.082     0.806
+min            4.600             0.120        0.000           0.900      0.012                1.000                 6.000     0.990     2.740      0.330     8.400     3.000
+25%            7.100             0.392        0.090           1.900      0.070                7.000                21.000     0.996     3.205      0.550     9.500     5.000
+50%            7.900             0.520        0.250           2.200      0.079               13.000                37.000     0.997     3.310      0.620    10.200     6.000
+75%            9.100             0.640        0.420           2.600      0.090               21.000                61.000     0.998     3.400      0.730    11.100     6.000
+max           15.900             1.580        1.000          15.500      0.611               68.000               289.000     1.004     4.010      2.000    14.900     8.000
+
+🎯 Phân bố biến mục tiêu 'quality':
+   Quality 3:    6 mẫu (  0.5%) 
+   Quality 4:   33 mẫu (  2.9%) ███
+   Quality 5:  483 mẫu ( 42.3%) ████████████████████████████████████████████████
+   Quality 6:  462 mẫu ( 40.4%) ██████████████████████████████████████████████
+   Quality 7:  143 mẫu ( 12.5%) ██████████████
+   Quality 8:   16 mẫu (  1.4%) █
+
+======================================================================
+BƯỚC 1.1: LÀM SẠCH DỮ LIỆU
+======================================================================
+
+🔍 Kiểm tra giá trị khuyết thiếu (Missing Values):
+   ✅ Không có giá trị khuyết thiếu nào!
+
+🔍 Kiểm tra dữ liệu trùng lặp (Duplicates):
+   Số dòng trùng lặp: 125 (10.9%)
+   ✅ Đã loại bỏ → Còn lại: 1018 mẫu
+
+🔍 Xử lý dữ liệu ngoại lai (Outliers) bằng phương pháp IQR:
+   Outliers phát hiện và đã cắt (clip):
+   - residual sugar: 95 outliers
+   - chlorides: 71 outliers
+   - sulphates: 41 outliers
+   - fixed acidity: 37 outliers
+   - total sulfur dioxide: 33 outliers
+   - density: 30 outliers
+   - pH: 24 outliers
+   - free sulfur dioxide: 16 outliers
+   - volatile acidity: 10 outliers
+   - alcohol: 6 outliers
+   - citric acid: 1 outliers
+
+📊 Kích thước dữ liệu sau làm sạch: (1018, 12)
+
+======================================================================
+BƯỚC 1.2: MÃ HÓA & PHÂN CHIA DỮ LIỆU
+======================================================================
+
+🏷️  Label Encoding:
+   Quality 3 → Class 0
+   Quality 4 → Class 1
+   Quality 5 → Class 2
+   Quality 6 → Class 3
+   Quality 7 → Class 4
+   Quality 8 → Class 5
+
+📦 Phân chia dữ liệu (với stratify):
+   Train Set :  712 mẫu (69.9%)
+   Val Set   :  153 mẫu (15.0%)
+   Test Set  :  153 mẫu (15.0%)
+
+📊 Kiểm tra phân bố lớp trong từng tập:
+   Train: C0:4, C1:23, C2:303, C3:286, C4:85, C5:11
+   Val  : C0:1, C1:5, C2:65, C3:61, C4:19, C5:2
+   Test : C0:1, C1:5, C2:65, C3:62, C4:18, C5:2
+
+======================================================================
+BƯỚC 1.3: CHUẨN HÓA ĐẶC TRƯNG (Feature Scaling)
+======================================================================
+
+✅ Đã chuẩn hóa bằng StandardScaler (z-score normalization)
+   → fit() chỉ trên Train Set, transform() lên Val/Test (tránh data leakage)
+   Ví dụ mean sau chuẩn hóa (Train): [0. 0. 0.]...
+   Ví dụ std sau chuẩn hóa (Train) : [1. 1. 1.]...
+
+======================================================================
+BƯỚC 1.4: XỬ LÝ MẤT CÂN BẰNG LỚP (SMOTE)
+======================================================================
+
+📊 Phân bố lớp TRƯỚC SMOTE (Train Set):
+   Class 0 (Quality 3):    4 
+   Class 1 (Quality 4):   23 ████
+   Class 2 (Quality 5):  303 ████████████████████████████████████████████████████████████
+   Class 3 (Quality 6):  286 █████████████████████████████████████████████████████████
+   Class 4 (Quality 7):   85 █████████████████
+   Class 5 (Quality 8):   11 ██
+
+📊 Phân bố lớp SAU SMOTE (Train Set):
+   Class 0 (Quality 3):  303 ████████████████████████████████████████████████████████████
+   Class 1 (Quality 4):  303 ████████████████████████████████████████████████████████████
+   Class 2 (Quality 5):  303 ████████████████████████████████████████████████████████████
+   Class 3 (Quality 6):  303 ████████████████████████████████████████████████████████████
+   Class 4 (Quality 7):  303 ████████████████████████████████████████████████████████████
+   Class 5 (Quality 8):  303 ████████████████████████████████████████████████████████████
+
+✅ Kích thước Train Set: 712 → 1818 mẫu
+
+
+🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧
+  PHẦN 2: XÂY DỰNG & HUẤN LUYỆN MÔ HÌNH
+🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧
+
+⚖️  Class Weights: {np.int64(0): np.float64(1.0), np.int64(1): np.float64(1.0), np.int64(2): np.float64(1.0), np.int64(3): np.float64(1.0), np.int64(4): np.float64(1.0), np.int64(5): np.float64(1.0)}
+
+======================================================================
+MÔ HÌNH 1: DEEP ANN (thay bằng sklearn do lỗi cài đặt TF)
+======================================================================
+
+🚀 Bắt đầu huấn luyện Deep ANN (sklearn MLP)...
+
+✅ Huấn luyện hoàn tất sau 59 epoch
+
+======================================================================
+MÔ HÌNH 2: MLP (scikit-learn)
+======================================================================
+
+📐 Cấu hình MLP:
+   Hidden layers: (256, 128, 64)
+   Activation: relu
+   Solver: adam
+   Learning rate: adaptive (init=0.001)
+   Regularization (alpha): 0.001
+   Early Stopping: True (patience=20)
+
+🚀 Bắt đầu huấn luyện MLP...
+Iteration 1, loss = 1.22160915
+Validation score: 0.619048
+Iteration 2, loss = 0.78519459
+Validation score: 0.714286
+Iteration 3, loss = 0.63104649
+Validation score: 0.776557
+Iteration 4, loss = 0.53586983
+Validation score: 0.783883
+Iteration 5, loss = 0.48453788
+Validation score: 0.794872
+Iteration 6, loss = 0.44282741
+Validation score: 0.780220
+Iteration 7, loss = 0.41277547
+Validation score: 0.820513
+Iteration 8, loss = 0.37561097
+Validation score: 0.802198
+Iteration 9, loss = 0.36941121
+Validation score: 0.805861
+Iteration 10, loss = 0.32234436
+Validation score: 0.816850
+Iteration 11, loss = 0.31137324
+Validation score: 0.827839
+Iteration 12, loss = 0.30861286
+Validation score: 0.813187
+Iteration 13, loss = 0.30072405
+Validation score: 0.820513
+Iteration 14, loss = 0.26948033
+Validation score: 0.824176
+Iteration 15, loss = 0.25827007
+Validation score: 0.824176
+Iteration 16, loss = 0.24468288
+Validation score: 0.813187
+Iteration 17, loss = 0.24082006
+Validation score: 0.813187
+Iteration 18, loss = 0.21783792
+Validation score: 0.820513
+Iteration 19, loss = 0.22334972
+Validation score: 0.820513
+Iteration 20, loss = 0.20662478
+Validation score: 0.831502
+Iteration 21, loss = 0.20869761
+Validation score: 0.827839
+Iteration 22, loss = 0.19140863
+Validation score: 0.831502
+Iteration 23, loss = 0.17791226
+Validation score: 0.827839
+Iteration 24, loss = 0.19494025
+Validation score: 0.827839
+Iteration 25, loss = 0.16435583
+Validation score: 0.831502
+Iteration 26, loss = 0.16142554
+Validation score: 0.820513
+Iteration 27, loss = 0.14792724
+Validation score: 0.816850
+Iteration 28, loss = 0.16125912
+Validation score: 0.846154
+Iteration 29, loss = 0.14231707
+Validation score: 0.842491
+Iteration 30, loss = 0.14313561
+Validation score: 0.857143
+Iteration 31, loss = 0.12378561
+Validation score: 0.838828
+Iteration 32, loss = 0.13443346
+Validation score: 0.853480
+Iteration 33, loss = 0.11486868
+Validation score: 0.824176
+Iteration 34, loss = 0.10996024
+Validation score: 0.846154
+Iteration 35, loss = 0.10596555
+Validation score: 0.831502
+Iteration 36, loss = 0.10886000
+Validation score: 0.831502
+Iteration 37, loss = 0.09050487
+Validation score: 0.846154
+Iteration 38, loss = 0.09268826
+Validation score: 0.857143
+Iteration 39, loss = 0.09794420
+Validation score: 0.820513
+Iteration 40, loss = 0.08194694
+Validation score: 0.846154
+Iteration 41, loss = 0.09358466
+Validation score: 0.846154
+Iteration 42, loss = 0.09137420
+Validation score: 0.838828
+Iteration 43, loss = 0.07962246
+Validation score: 0.846154
+Iteration 44, loss = 0.07686003
+Validation score: 0.857143
+Iteration 45, loss = 0.06865082
+Validation score: 0.838828
+Iteration 46, loss = 0.08462598
+Validation score: 0.838828
+Iteration 47, loss = 0.07410492
+Validation score: 0.846154
+Iteration 48, loss = 0.07529484
+Validation score: 0.849817
+Iteration 49, loss = 0.05024195
+Validation score: 0.831502
+Iteration 50, loss = 0.06027655
+Validation score: 0.846154
+Iteration 51, loss = 0.04601858
+Validation score: 0.849817
+Validation score did not improve more than tol=0.000100 for 20 consecutive epochs. Stopping.
+
+✅ Huấn luyện hoàn tất sau 51 epoch
+   Best val_score: 0.8571
+
+======================================================================
+MÔ HÌNH 3: XGBoost
+======================================================================
+
+📐 Cấu hình XGBoost:
+   n_estimators: 500 (max), early_stopping_rounds: 20
+   max_depth: 6, learning_rate: 0.05
+   subsample: 0.8, colsample_bytree: 0.8
+   Regularization: gamma=0.1, alpha=0.1, lambda=1.0
+
+🚀 Bắt đầu huấn luyện XGBoost...
+[0]	validation_0-mlogloss:1.71132	validation_1-mlogloss:1.75115
+[20]	validation_0-mlogloss:0.88492	validation_1-mlogloss:1.32684
+[40]	validation_0-mlogloss:0.56460	validation_1-mlogloss:1.13657
+[60]	validation_0-mlogloss:0.40379	validation_1-mlogloss:1.03311
+[80]	validation_0-mlogloss:0.30662	validation_1-mlogloss:0.98862
+[100]	validation_0-mlogloss:0.24385	validation_1-mlogloss:0.96569
+[120]	validation_0-mlogloss:0.19985	validation_1-mlogloss:0.95377
+[140]	validation_0-mlogloss:0.16901	validation_1-mlogloss:0.95089
+[160]	validation_0-mlogloss:0.14461	validation_1-mlogloss:0.95134
+[177]	validation_0-mlogloss:0.12917	validation_1-mlogloss:0.95975
+
+✅ Huấn luyện hoàn tất!
+   Best iteration: 157
+   Best val_mlogloss: 0.9502
+
+
+📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊
+  PHẦN 3: ĐÁNH GIÁ TOÀN DIỆN TRÊN TEST SET
+📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊
+
+======================================================================
+PHẦN 3: BÁO CÁO ĐÁNH GIÁ TOÀN DIỆN
+======================================================================
+
+──────────────────────────────────────────────────
+📊 Deep ANN (sklearn)
+──────────────────────────────────────────────────
+   Accuracy           : 0.4379
+   Balanced Accuracy  : 0.2018
+   Macro Precision    : 0.2172
+   Macro Recall       : 0.2018
+   Macro F1-Score     : 0.2084
+   Weighted F1-Score  : 0.4457
+
+   Classification Report:
+              precision    recall  f1-score   support
+
+          Q3       0.00      0.00      0.00         1
+          Q4       0.00      0.00      0.00         5
+          Q5       0.54      0.57      0.55        65
+          Q6       0.48      0.42      0.45        62
+          Q7       0.29      0.22      0.25        18
+          Q8       0.00      0.00      0.00         2
+
+    accuracy                           0.44       153
+   macro avg       0.22      0.20      0.21       153
+weighted avg       0.46      0.44      0.45       153
+
+
+──────────────────────────────────────────────────
+📊 MLP (scikit-learn)
+──────────────────────────────────────────────────
+   Accuracy           : 0.4575
+   Balanced Accuracy  : 0.2234
+   Macro Precision    : 0.2346
+   Macro Recall       : 0.2234
+   Macro F1-Score     : 0.2286
+   Weighted F1-Score  : 0.4682
+
+   Classification Report:
+              precision    recall  f1-score   support
+
+          Q3       0.00      0.00      0.00         1
+          Q4       0.00      0.00      0.00         5
+          Q5       0.59      0.52      0.55        65
+          Q6       0.47      0.48      0.48        62
+          Q7       0.35      0.33      0.34        18
+          Q8       0.00      0.00      0.00         2
+
+    accuracy                           0.46       153
+   macro avg       0.23      0.22      0.23       153
+weighted avg       0.48      0.46      0.47       153
+
+
+──────────────────────────────────────────────────
+📊 XGBoost
+──────────────────────────────────────────────────
+   Accuracy           : 0.4706
+   Balanced Accuracy  : 0.3157
+   Macro Precision    : 0.3156
+   Macro Recall       : 0.3157
+   Macro F1-Score     : 0.3135
+   Weighted F1-Score  : 0.4842
+
+   Classification Report:
+              precision    recall  f1-score   support
+
+          Q3       0.00      0.00      0.00         1
+          Q4       0.00      0.00      0.00         5
+          Q5       0.65      0.55      0.60        65
+          Q6       0.46      0.45      0.46        62
+          Q7       0.28      0.39      0.33        18
+          Q8       0.50      0.50      0.50         2
+
+    accuracy                           0.47       153
+   macro avg       0.32      0.32      0.31       153
+weighted avg       0.50      0.47      0.48       153
+
+
+======================================================================
+📈 BẢNG SO SÁNH TỔNG HỢP
+======================================================================
+Metric                    |     Deep ANN |          MLP |      XGBoost
+──────────────────────────────────────────────────────────────────────
+Accuracy                  |    0.4379    |    0.4575    |    0.4706 🏆
+Balanced Accuracy         |    0.2018    |    0.2234    |    0.3157 🏆
+Macro Precision           |    0.2172    |    0.2346    |    0.3156 🏆
+Macro Recall              |    0.2018    |    0.2234    |    0.3157 🏆
+Macro F1-Score            |    0.2084    |    0.2286    |    0.3135 🏆
+Weighted F1-Score         |    0.4457    |    0.4682    |    0.4842 🏆
+
+🏆 MÔ HÌNH CHIẾN THẮNG: XGBoost
+   (Dựa trên Weighted F1-Score: 0.4842)
+
+
+🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨
+  TẠO BIỂU ĐỒ TRỰC QUAN HÓA
+🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨
+
+📊 Đã lưu Learning Curves: D:\WORKSPACE\WINE_AI\output\learning_curves.png
+📊 Đã lưu Confusion Matrices: D:\WORKSPACE\WINE_AI\output\confusion_matrices.png
+📊 Đã lưu Metrics Comparison: D:\WORKSPACE\WINE_AI\output\metrics_comparison.png
+📊 Đã lưu Feature Importance: D:\WORKSPACE\WINE_AI\output\feature_importance.png
+
+📝 Đã lưu báo cáo: D:\WORKSPACE\WINE_AI\report.md
+
+
+✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅
+  HOÀN TẤT TOÀN BỘ PIPELINE!
+✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅
+
+📂 Kết quả đầu ra đã được lưu tại: D:\WORKSPACE\WINE_AI\output
+   - learning_curves.png
+   - confusion_matrices.png
+   - metrics_comparison.png
+   - feature_importance.png
+   - ../report.md
+
+🏆 KẾT LUẬN: XGBoost chiến thắng với Weighted F1 = 0.4842
+🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷

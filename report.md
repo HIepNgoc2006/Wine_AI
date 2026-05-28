@@ -1,6 +1,6 @@
 # 📊 BÁO CÁO TỔNG HỢP: HỆ THỐNG PHÂN LOẠI CHẤT LƯỢNG RƯỢU VANG
 
-> **Ngày tạo**: 28/05/2026 23:36
+> **Ngày tạo**: 29/05/2026 01:28
 > **Dữ liệu**: WineQT.csv — Phân loại chất lượng rượu vang đỏ (Quality: 3-8)
 > **Mô hình**: Deep Neural Network (TensorFlow/Keras) | MLP (scikit-learn) | XGBoost
 > **Ngôn ngữ**: Python | TensorFlow/tf.keras | scikit-learn | XGBoost
@@ -74,28 +74,28 @@ Tốc độ học (λ) quyết định mức độ cập nhật trọng số sau
 
 ### 3.1 Phân tích Quá trình Huấn luyện (Learning Curves — Deep ANN)
 
-Mô hình Deep ANN được huấn luyện với **53 epoch** trước khi Early Stopping kích hoạt:
+Mô hình Deep ANN được huấn luyện với **41 epoch** trước khi Early Stopping kích hoạt:
 
-- **Loss Curve**: Train Loss giảm dần đều, Val Loss giảm theo nhưng bắt đầu phẳng (bão hòa) sau epoch 33. Điều này cho thấy mô hình đã **hội tụ tốt** — hàm mất mát categorical_crossentropy đã được kiểm soát.
+- **Loss Curve**: Train Loss giảm dần đều, Val Loss giảm theo nhưng bắt đầu phẳng (bão hòa) sau epoch 21. Điều này cho thấy mô hình đã **hội tụ tốt** — hàm mất mát categorical_crossentropy đã được kiểm soát.
   - Khoảng cách giữa Train Loss và Val Loss (**generalization gap**) ở mức chấp nhận được, chứng minh **Dropout + BatchNormalization** đã kiểm soát hiệu quả hiện tượng Overfitting.
   - Hàm Loss giảm đều chứng tỏ Learning Rate (λ=0.001) được chọn **phù hợp** — không quá lớn (gây dao động/diverge) và không quá nhỏ (hội tụ chậm/stuck tại local minimum).
 
 - **Accuracy Curve**: Train Accuracy tăng nhanh trong 20-30 epoch đầu, sau đó tăng chậm và bão hòa. Val Accuracy tăng tương ứng nhưng có dao động nhẹ — bình thường với tập validation nhỏ.
 
-- **Tác dụng Early Stopping**: Dừng tại epoch 53, khôi phục trọng số tốt nhất tại epoch 33 (restore_best_weights=True). Best val_loss = 1.0203, val_accuracy = 0.5882.
+- **Tác dụng Early Stopping**: Dừng tại epoch 41, khôi phục trọng số tốt nhất tại epoch 21 (restore_best_weights=True). Best val_loss = 1.0749, val_accuracy = 0.5359.
 
 ### 3.2 Bảng so sánh chỉ số đo lường (trên Test Set)
 
 | Chỉ số | Deep ANN (tf.keras) | MLP (sklearn) | XGBoost |
 |--------|---------------------|---------------|---------| 
-| **Accuracy** | 0.4771 | 0.4575 | 0.4706 |
-| **Balanced Accuracy** | 0.3182 | 0.2234 | 0.3157 |
-| **Macro Precision** | 0.2789 | 0.2346 | 0.3156 |
-| **Macro Recall** | 0.3182 | 0.2234 | 0.3157 |
-| **Macro F1-Score** | 0.2833 | 0.2286 | 0.3135 |
-| **Weighted F1-Score** | 0.4995 | 0.4682 | 0.4842 |
+| **Accuracy** | 0.4118 | 0.4575 | 0.4902 |
+| **Balanced Accuracy** | 0.2986 | 0.2234 | 0.3300 |
+| **Macro Precision** | 0.2651 | 0.2346 | 0.3251 |
+| **Macro Recall** | 0.2986 | 0.2234 | 0.3300 |
+| **Macro F1-Score** | 0.2621 | 0.2286 | 0.3246 |
+| **Weighted F1-Score** | 0.4477 | 0.4682 | 0.5032 |
 
-> 🏆 **Mô hình chiến thắng**: **Deep ANN (TensorFlow)** với Weighted F1-Score = **0.4995**
+> 🏆 **Mô hình chiến thắng**: **XGBoost** với Weighted F1-Score = **0.5032**
 
 ### 3.3 Classification Report chi tiết (trên Test Set)
 
@@ -105,14 +105,14 @@ Mô hình Deep ANN được huấn luyện với **53 epoch** trước khi Early
 
           Q3       0.00      0.00      0.00         1
           Q4       0.00      0.00      0.00         5
-          Q5       0.64      0.58      0.61        65
-          Q6       0.53      0.44      0.48        62
-          Q7       0.33      0.39      0.36        18
+          Q5       0.63      0.49      0.55        65
+          Q6       0.50      0.35      0.42        62
+          Q7       0.30      0.44      0.36        18
           Q8       0.17      0.50      0.25         2
 
-    accuracy                           0.48       153
-   macro avg       0.28      0.32      0.28       153
-weighted avg       0.53      0.48      0.50       153
+    accuracy                           0.41       153
+   macro avg       0.27      0.30      0.26       153
+weighted avg       0.51      0.41      0.45       153
 
 ```
 
@@ -139,14 +139,14 @@ weighted avg       0.48      0.46      0.47       153
 
           Q3       0.00      0.00      0.00         1
           Q4       0.00      0.00      0.00         5
-          Q5       0.65      0.55      0.60        65
-          Q6       0.46      0.45      0.46        62
-          Q7       0.28      0.39      0.33        18
+          Q5       0.67      0.60      0.63        65
+          Q6       0.48      0.44      0.46        62
+          Q7       0.30      0.44      0.36        18
           Q8       0.50      0.50      0.50         2
 
-    accuracy                           0.47       153
-   macro avg       0.32      0.32      0.31       153
-weighted avg       0.50      0.47      0.48       153
+    accuracy                           0.49       153
+   macro avg       0.33      0.33      0.32       153
+weighted avg       0.52      0.49      0.50       153
 
 ```
 
@@ -184,7 +184,7 @@ weighted avg       0.50      0.47      0.48       153
 
 ### 5.1 Kết luận
 
-1. **Deep ANN (TensorFlow)** đạt hiệu suất cao nhất trong 3 mô hình được thử nghiệm, với Weighted F1-Score = 0.4995.
+1. **XGBoost** đạt hiệu suất cao nhất trong 3 mô hình được thử nghiệm, với Weighted F1-Score = 0.5032.
 2. Đối với dữ liệu dạng bảng (tabular) nhỏ (~1000 mẫu, 11 features), **mô hình tree-based (XGBoost) thường vượt trội** hơn mạng nơ-ron — phù hợp với các nghiên cứu benchmark gần đây (Grinsztajn et al., 2022).
 3. Mất cân bằng lớp nghiêm trọng (Quality 3: ~0.5%, Quality 8: ~1.4%) là **thách thức lớn nhất** — tất cả mô hình đều gặp khó khăn với lớp thiểu số dù đã áp dụng SMOTE + Class Weights.
 4. Chiến lược **ReLU + BatchNorm + Dropout + Early Stopping** đã kiểm soát hiệu quả Vanishing Gradient và Overfitting cho mạng nơ-ron sâu 4 lớp ẩn.

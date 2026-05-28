@@ -1,0 +1,753 @@
+
+🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷
+  HỆ THỐNG PHÂN LOẠI CHẤT LƯỢNG RƯỢU VANG
+  Wine Quality Classification System
+  [Deep ANN (TensorFlow) | MLP | XGBoost]
+🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷
+
+📌 TensorFlow version: 2.21.0
+WARNING:tensorflow:TensorFlow GPU support is not available on native Windows for TensorFlow >= 2.11. Even if CUDA/cuDNN are installed, GPU will not be used. Please use WSL2 or the TensorFlow-DirectML plugin.
+📌 GPU available: False
+======================================================================
+PHẦN 1: TẢI VÀ KHÁM PHÁ DỮ LIỆU
+======================================================================
+
+📊 Kích thước dữ liệu gốc:
+   Tổng: 1143 mẫu × 12 cột
+   Ma trận đặc trưng X ∈ ℝ^(1143 × 11)
+   Vector nhãn y ∈ ℝ^(1143)
+
+📋 Danh sách 11 đặc trưng (features):
+    1. fixed acidity (dtype: float64)
+    2. volatile acidity (dtype: float64)
+    3. citric acid (dtype: float64)
+    4. residual sugar (dtype: float64)
+    5. chlorides (dtype: float64)
+    6. free sulfur dioxide (dtype: float64)
+    7. total sulfur dioxide (dtype: float64)
+    8. density (dtype: float64)
+    9. pH (dtype: float64)
+   10. sulphates (dtype: float64)
+   11. alcohol (dtype: float64)
+   12. quality (dtype: int64) ← BIẾN MỤC TIÊU (target)
+
+📈 Thống kê mô tả:
+       fixed acidity  volatile acidity  citric acid  residual sugar  chlorides  free sulfur dioxide  total sulfur dioxide   density        pH  sulphates   alcohol   quality
+count       1143.000          1143.000     1143.000        1143.000   1143.000             1143.000              1143.000  1143.000  1143.000   1143.000  1143.000  1143.000
+mean           8.311             0.531        0.268           2.532      0.087               15.615                45.915     0.997     3.311      0.658    10.442     5.657
+std            1.748             0.180        0.197           1.356      0.047               10.250                32.782     0.002     0.157      0.170     1.082     0.806
+min            4.600             0.120        0.000           0.900      0.012                1.000                 6.000     0.990     2.740      0.330     8.400     3.000
+25%            7.100             0.392        0.090           1.900      0.070                7.000                21.000     0.996     3.205      0.550     9.500     5.000
+50%            7.900             0.520        0.250           2.200      0.079               13.000                37.000     0.997     3.310      0.620    10.200     6.000
+75%            9.100             0.640        0.420           2.600      0.090               21.000                61.000     0.998     3.400      0.730    11.100     6.000
+max           15.900             1.580        1.000          15.500      0.611               68.000               289.000     1.004     4.010      2.000    14.900     8.000
+
+🎯 Phân bố biến mục tiêu 'quality' (TRƯỚC xử lý):
+   Quality 3:    6 mẫu (  0.5%) 
+   Quality 4:   33 mẫu (  2.9%) ███
+   Quality 5:  483 mẫu ( 42.3%) ████████████████████████████████████████████████
+   Quality 6:  462 mẫu ( 40.4%) ██████████████████████████████████████████████
+   Quality 7:  143 mẫu ( 12.5%) ██████████████
+   Quality 8:   16 mẫu (  1.4%) █
+
+======================================================================
+BƯỚC 1.1: LÀM SẠCH DỮ LIỆU
+======================================================================
+
+🔍 Kiểm tra giá trị khuyết thiếu (Missing Values):
+   ✅ Không có giá trị khuyết thiếu nào!
+
+🔍 Kiểm tra dữ liệu trùng lặp (Duplicates):
+   Số dòng trùng lặp: 125 (10.9%)
+   ✅ Đã loại bỏ → Còn lại: 1018 mẫu
+
+🔍 Xử lý dữ liệu ngoại lai (Outliers) bằng phương pháp IQR:
+   Outliers phát hiện và đã cắt (clip):
+   - residual sugar: 95 outliers
+   - chlorides: 71 outliers
+   - sulphates: 41 outliers
+   - fixed acidity: 37 outliers
+   - total sulfur dioxide: 33 outliers
+   - density: 30 outliers
+   - pH: 24 outliers
+   - free sulfur dioxide: 16 outliers
+   - volatile acidity: 10 outliers
+   - alcohol: 6 outliers
+   - citric acid: 1 outliers
+
+📊 Kích thước dữ liệu sau làm sạch: (1018, 12)
+   Ma trận đặc trưng X ∈ ℝ^(1018 × 11)
+
+======================================================================
+BƯỚC 1.2: MÃ HÓA & PHÂN CHIA DỮ LIỆU
+======================================================================
+
+🏷️  Label Encoding:
+   Quality 3 → Class 0
+   Quality 4 → Class 1
+   Quality 5 → Class 2
+   Quality 6 → Class 3
+   Quality 7 → Class 4
+   Quality 8 → Class 5
+
+📦 Phân chia dữ liệu (với stratify):
+   Train Set :  712 mẫu (69.9%)
+   Val Set   :  153 mẫu (15.0%)
+   Test Set  :  153 mẫu (15.0%)
+
+📊 Kiểm tra phân bố lớp trong từng tập:
+   Train: C0:4, C1:23, C2:303, C3:286, C4:85, C5:11
+   Val  : C0:1, C1:5, C2:65, C3:61, C4:19, C5:2
+   Test : C0:1, C1:5, C2:65, C3:62, C4:18, C5:2
+
+======================================================================
+BƯỚC 1.3: CHUẨN HÓA ĐẶC TRƯNG (Feature Scaling)
+======================================================================
+
+✅ Đã chuẩn hóa bằng StandardScaler (z-score normalization)
+   → fit() chỉ trên Train Set, transform() lên Val/Test (tránh data leakage)
+   Ví dụ mean sau chuẩn hóa (Train): [0. 0. 0.]...
+   Ví dụ std sau chuẩn hóa (Train) : [1. 1. 1.]...
+
+======================================================================
+BƯỚC 1.4: XỬ LÝ MẤT CÂN BẰNG LỚP (SMOTE)
+======================================================================
+
+📊 Phân bố lớp TRƯỚC SMOTE (Train Set):
+   Class 0 (Quality 3):    4 
+   Class 1 (Quality 4):   23 ████
+   Class 2 (Quality 5):  303 ████████████████████████████████████████████████████████████
+   Class 3 (Quality 6):  286 █████████████████████████████████████████████████████████
+   Class 4 (Quality 7):   85 █████████████████
+   Class 5 (Quality 8):   11 ██
+
+📊 Phân bố lớp SAU SMOTE (Train Set):
+   Class 0 (Quality 3):  303 ████████████████████████████████████████████████████████████
+   Class 1 (Quality 4):  303 ████████████████████████████████████████████████████████████
+   Class 2 (Quality 5):  303 ████████████████████████████████████████████████████████████
+   Class 3 (Quality 6):  303 ████████████████████████████████████████████████████████████
+   Class 4 (Quality 7):  303 ████████████████████████████████████████████████████████████
+   Class 5 (Quality 8):  303 ████████████████████████████████████████████████████████████
+
+✅ Kích thước Train Set: 712 → 1818 mẫu
+
+📊 Phân bố nhãn SAU TOÀN BỘ quá trình tiền xử lý:
+   Ma trận đặc trưng X_train (sau SMOTE): ℝ^(1818 × 11)
+   Ma trận đặc trưng X_val: ℝ^(153 × 11)
+   Ma trận đặc trưng X_test: ℝ^(153 × 11)
+
+
+🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧
+  PHẦN 2: XÂY DỰNG & HUẤN LUYỆN MÔ HÌNH
+🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧🔧
+
+⚖️  Class Weights (sau SMOTE — gần bằng nhau):
+   Class 0 (Q3): 1.0000
+   Class 1 (Q4): 1.0000
+   Class 2 (Q5): 1.0000
+   Class 3 (Q6): 1.0000
+   Class 4 (Q7): 1.0000
+   Class 5 (Q8): 1.0000
+
+======================================================================
+MÔ HÌNH 1: DEEP NEURAL NETWORK (TensorFlow / tf.keras)
+======================================================================
+
+🏗️  Kiến trúc mạng Deep Neural Network (tf.keras):
+   Input Layer   : 11 neurons (11 đặc trưng hóa học)
+   Hidden Block 1: Dense(256) → BatchNorm → ReLU → Dropout(0.3)
+   Hidden Block 2: Dense(128) → BatchNorm → ReLU → Dropout(0.3)
+   Hidden Block 3: Dense(64)  → BatchNorm → ReLU → Dropout(0.2)
+   Hidden Block 4: Dense(32)  → BatchNorm → ReLU → Dropout(0.2)
+   Output Layer  : Dense(6) → Softmax
+Model: "WineQuality_DNN"
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┓
+┃ Layer (type)                         ┃ Output Shape                ┃         Param # ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━┩
+│ dense_block1 (Dense)                 │ (None, 256)                 │           3,072 │
+├──────────────────────────────────────┼─────────────────────────────┼─────────────────┤
+│ bn_block1 (BatchNormalization)       │ (None, 256)                 │           1,024 │
+├──────────────────────────────────────┼─────────────────────────────┼─────────────────┤
+│ relu_block1 (Activation)             │ (None, 256)                 │               0 │
+├──────────────────────────────────────┼─────────────────────────────┼─────────────────┤
+│ dropout_block1 (Dropout)             │ (None, 256)                 │               0 │
+├──────────────────────────────────────┼─────────────────────────────┼─────────────────┤
+│ dense_block2 (Dense)                 │ (None, 128)                 │          32,896 │
+├──────────────────────────────────────┼─────────────────────────────┼─────────────────┤
+│ bn_block2 (BatchNormalization)       │ (None, 128)                 │             512 │
+├──────────────────────────────────────┼─────────────────────────────┼─────────────────┤
+│ relu_block2 (Activation)             │ (None, 128)                 │               0 │
+├──────────────────────────────────────┼─────────────────────────────┼─────────────────┤
+│ dropout_block2 (Dropout)             │ (None, 128)                 │               0 │
+├──────────────────────────────────────┼─────────────────────────────┼─────────────────┤
+│ dense_block3 (Dense)                 │ (None, 64)                  │           8,256 │
+├──────────────────────────────────────┼─────────────────────────────┼─────────────────┤
+│ bn_block3 (BatchNormalization)       │ (None, 64)                  │             256 │
+├──────────────────────────────────────┼─────────────────────────────┼─────────────────┤
+│ relu_block3 (Activation)             │ (None, 64)                  │               0 │
+├──────────────────────────────────────┼─────────────────────────────┼─────────────────┤
+│ dropout_block3 (Dropout)             │ (None, 64)                  │               0 │
+├──────────────────────────────────────┼─────────────────────────────┼─────────────────┤
+│ dense_block4 (Dense)                 │ (None, 32)                  │           2,080 │
+├──────────────────────────────────────┼─────────────────────────────┼─────────────────┤
+│ bn_block4 (BatchNormalization)       │ (None, 32)                  │             128 │
+├──────────────────────────────────────┼─────────────────────────────┼─────────────────┤
+│ relu_block4 (Activation)             │ (None, 32)                  │               0 │
+├──────────────────────────────────────┼─────────────────────────────┼─────────────────┤
+│ dropout_block4 (Dropout)             │ (None, 32)                  │               0 │
+├──────────────────────────────────────┼─────────────────────────────┼─────────────────┤
+│ output_softmax (Dense)               │ (None, 6)                   │             198 │
+└──────────────────────────────────────┴─────────────────────────────┴─────────────────┘
+ Total params: 48,422 (189.15 KB)
+ Trainable params: 47,462 (185.40 KB)
+ Non-trainable params: 960 (3.75 KB)
+
+   📐 Tổng tham số: 48,422
+
+⚙️  Cấu hình huấn luyện:
+   Optimizer     : Adam (lr=0.001)
+   Loss Function : categorical_crossentropy
+   Batch Size    : 32
+   Max Epochs    : 300
+   Early Stopping: patience=20 (dừng khi val_loss không giảm)
+   LR Scheduler  : ReduceLROnPlateau (factor=0.5, patience=10)
+
+🚀 Bắt đầu huấn luyện Deep Neural Network (TensorFlow)...
+Epoch 1/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m2:40[0m 3s/step - accuracy: 0.2500 - loss: 2.1213
+[1m21/57[0m [32m━━━━━━━[0m[37m━━━━━━━━━━━━━[0m [1m0s[0m 3ms/step - accuracy: 0.2499 - loss: 1.9760 
+[1m41/57[0m [32m━━━━━━━━━━━━━━[0m[37m━━━━━━[0m [1m0s[0m 3ms/step - accuracy: 0.2696 - loss: 1.8925
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m3s[0m 9ms/step - accuracy: 0.3284 - loss: 1.6934 - val_accuracy: 0.2745 - val_loss: 1.7419 - learning_rate: 0.0010
+Epoch 2/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m1s[0m 29ms/step - accuracy: 0.4688 - loss: 1.4811
+[1m25/57[0m [32m━━━━━━━━[0m[37m━━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.4595 - loss: 1.3763 
+[1m50/57[0m [32m━━━━━━━━━━━━━━━━━[0m[37m━━━[0m [1m0s[0m 2ms/step - accuracy: 0.4612 - loss: 1.3661
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.4741 - loss: 1.3354 - val_accuracy: 0.3072 - val_loss: 1.5890 - learning_rate: 0.0010
+Epoch 3/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m1s[0m 27ms/step - accuracy: 0.4688 - loss: 1.2761
+[1m23/57[0m [32m━━━━━━━━[0m[37m━━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.5195 - loss: 1.2498 
+[1m44/57[0m [32m━━━━━━━━━━━━━━━[0m[37m━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.5302 - loss: 1.2322
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 4ms/step - accuracy: 0.5506 - loss: 1.1798 - val_accuracy: 0.3987 - val_loss: 1.4446 - learning_rate: 0.0010
+Epoch 4/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m1s[0m 27ms/step - accuracy: 0.7188 - loss: 0.8814
+[1m25/57[0m [32m━━━━━━━━[0m[37m━━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.5904 - loss: 1.0758 
+[1m48/57[0m [32m━━━━━━━━━━━━━━━━[0m[37m━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.5854 - loss: 1.0868
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.5814 - loss: 1.0988 - val_accuracy: 0.3987 - val_loss: 1.3864 - learning_rate: 0.0010
+Epoch 5/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m1s[0m 32ms/step - accuracy: 0.6250 - loss: 1.0283
+[1m24/57[0m [32m━━━━━━━━[0m[37m━━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.5832 - loss: 1.0728 
+[1m48/57[0m [32m━━━━━━━━━━━━━━━━[0m[37m━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.5949 - loss: 1.0556
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.6128 - loss: 1.0294 - val_accuracy: 0.4314 - val_loss: 1.3156 - learning_rate: 0.0010
+Epoch 6/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m1s[0m 27ms/step - accuracy: 0.5625 - loss: 1.0904
+[1m23/57[0m [32m━━━━━━━━[0m[37m━━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.5901 - loss: 1.0426 
+[1m46/57[0m [32m━━━━━━━━━━━━━━━━[0m[37m━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.6006 - loss: 1.0217
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 4ms/step - accuracy: 0.6205 - loss: 0.9999 - val_accuracy: 0.4641 - val_loss: 1.2596 - learning_rate: 0.0010
+Epoch 7/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m1s[0m 32ms/step - accuracy: 0.7500 - loss: 0.9601
+[1m25/57[0m [32m━━━━━━━━[0m[37m━━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.6440 - loss: 0.9954 
+[1m49/57[0m [32m━━━━━━━━━━━━━━━━━[0m[37m━━━[0m [1m0s[0m 2ms/step - accuracy: 0.6468 - loss: 0.9748
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.6452 - loss: 0.9466 - val_accuracy: 0.4379 - val_loss: 1.2485 - learning_rate: 0.0010
+Epoch 8/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m1s[0m 29ms/step - accuracy: 0.6250 - loss: 0.9677
+[1m24/57[0m [32m━━━━━━━━[0m[37m━━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.6350 - loss: 0.9318 
+[1m48/57[0m [32m━━━━━━━━━━━━━━━━[0m[37m━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.6475 - loss: 0.9147
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.6573 - loss: 0.9059 - val_accuracy: 0.4314 - val_loss: 1.2252 - learning_rate: 0.0010
+Epoch 9/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m6s[0m 119ms/step - accuracy: 0.5625 - loss: 1.1519
+[1m25/57[0m [32m━━━━━━━━[0m[37m━━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.6472 - loss: 0.9283  
+[1m48/57[0m [32m━━━━━━━━━━━━━━━━[0m[37m━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.6565 - loss: 0.9006
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.6700 - loss: 0.8652 - val_accuracy: 0.4510 - val_loss: 1.2003 - learning_rate: 0.0010
+Epoch 10/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m1s[0m 30ms/step - accuracy: 0.5625 - loss: 0.9820
+[1m24/57[0m [32m━━━━━━━━[0m[37m━━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.6633 - loss: 0.8666 
+[1m47/57[0m [32m━━━━━━━━━━━━━━━━[0m[37m━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.6732 - loss: 0.8500
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 4ms/step - accuracy: 0.6782 - loss: 0.8346 - val_accuracy: 0.4967 - val_loss: 1.1474 - learning_rate: 0.0010
+Epoch 11/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m1s[0m 28ms/step - accuracy: 0.5625 - loss: 1.0678
+[1m26/57[0m [32m━━━━━━━━━[0m[37m━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.6773 - loss: 0.8519 
+[1m51/57[0m [32m━━━━━━━━━━━━━━━━━[0m[37m━━━[0m [1m0s[0m 2ms/step - accuracy: 0.6877 - loss: 0.8355
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.6991 - loss: 0.8084 - val_accuracy: 0.4641 - val_loss: 1.1572 - learning_rate: 0.0010
+Epoch 12/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m1s[0m 27ms/step - accuracy: 0.7188 - loss: 0.8690
+[1m24/57[0m [32m━━━━━━━━[0m[37m━━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.6774 - loss: 0.8368 
+[1m46/57[0m [32m━━━━━━━━━━━━━━━━[0m[37m━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.6838 - loss: 0.8173
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.6942 - loss: 0.8023 - val_accuracy: 0.4248 - val_loss: 1.1663 - learning_rate: 0.0010
+Epoch 13/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m1s[0m 29ms/step - accuracy: 0.7188 - loss: 0.7493
+[1m26/57[0m [32m━━━━━━━━━[0m[37m━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7046 - loss: 0.7694 
+[1m51/57[0m [32m━━━━━━━━━━━━━━━━━[0m[37m━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7107 - loss: 0.7634
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.7189 - loss: 0.7594 - val_accuracy: 0.4510 - val_loss: 1.1405 - learning_rate: 0.0010
+Epoch 14/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m1s[0m 27ms/step - accuracy: 0.6562 - loss: 0.8245
+[1m25/57[0m [32m━━━━━━━━[0m[37m━━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.6779 - loss: 0.7818 
+[1m49/57[0m [32m━━━━━━━━━━━━━━━━━[0m[37m━━━[0m [1m0s[0m 2ms/step - accuracy: 0.6959 - loss: 0.7638
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.7090 - loss: 0.7527 - val_accuracy: 0.4641 - val_loss: 1.1223 - learning_rate: 0.0010
+Epoch 15/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m1s[0m 26ms/step - accuracy: 0.7812 - loss: 0.7227
+[1m23/57[0m [32m━━━━━━━━[0m[37m━━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7197 - loss: 0.7479 
+[1m46/57[0m [32m━━━━━━━━━━━━━━━━[0m[37m━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7257 - loss: 0.7397
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.7261 - loss: 0.7307 - val_accuracy: 0.4902 - val_loss: 1.1268 - learning_rate: 0.0010
+Epoch 16/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m1s[0m 26ms/step - accuracy: 0.6875 - loss: 0.7956
+[1m25/57[0m [32m━━━━━━━━[0m[37m━━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7234 - loss: 0.7207 
+[1m50/57[0m [32m━━━━━━━━━━━━━━━━━[0m[37m━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7215 - loss: 0.7147
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.7206 - loss: 0.7139 - val_accuracy: 0.4837 - val_loss: 1.1364 - learning_rate: 0.0010
+Epoch 17/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m1s[0m 27ms/step - accuracy: 0.7500 - loss: 0.7363
+[1m26/57[0m [32m━━━━━━━━━[0m[37m━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7369 - loss: 0.7084 
+[1m50/57[0m [32m━━━━━━━━━━━━━━━━━[0m[37m━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7398 - loss: 0.7006
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.7398 - loss: 0.6963 - val_accuracy: 0.4902 - val_loss: 1.0878 - learning_rate: 0.0010
+Epoch 18/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m1s[0m 28ms/step - accuracy: 0.7188 - loss: 0.7765
+[1m23/57[0m [32m━━━━━━━━[0m[37m━━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7319 - loss: 0.7208 
+[1m48/57[0m [32m━━━━━━━━━━━━━━━━[0m[37m━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7336 - loss: 0.7087
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.7277 - loss: 0.7009 - val_accuracy: 0.5098 - val_loss: 1.0873 - learning_rate: 0.0010
+Epoch 19/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m1s[0m 28ms/step - accuracy: 0.6875 - loss: 0.7610
+[1m26/57[0m [32m━━━━━━━━━[0m[37m━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7473 - loss: 0.6948 
+[1m51/57[0m [32m━━━━━━━━━━━━━━━━━[0m[37m━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7493 - loss: 0.6867
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.7492 - loss: 0.6751 - val_accuracy: 0.4967 - val_loss: 1.0843 - learning_rate: 0.0010
+Epoch 20/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m1s[0m 32ms/step - accuracy: 0.7812 - loss: 0.7450
+[1m23/57[0m [32m━━━━━━━━[0m[37m━━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7346 - loss: 0.7049 
+[1m48/57[0m [32m━━━━━━━━━━━━━━━━[0m[37m━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7375 - loss: 0.6901
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.7393 - loss: 0.6752 - val_accuracy: 0.5163 - val_loss: 1.1103 - learning_rate: 0.0010
+Epoch 21/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m6s[0m 116ms/step - accuracy: 0.7812 - loss: 0.6368
+[1m25/57[0m [32m━━━━━━━━[0m[37m━━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7306 - loss: 0.6746  
+[1m50/57[0m [32m━━━━━━━━━━━━━━━━━[0m[37m━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7331 - loss: 0.6704
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.7376 - loss: 0.6586 - val_accuracy: 0.5359 - val_loss: 1.0749 - learning_rate: 0.0010
+Epoch 22/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m1s[0m 26ms/step - accuracy: 0.7500 - loss: 0.6528
+[1m25/57[0m [32m━━━━━━━━[0m[37m━━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7332 - loss: 0.6570 
+[1m50/57[0m [32m━━━━━━━━━━━━━━━━━[0m[37m━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7411 - loss: 0.6491
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.7525 - loss: 0.6401 - val_accuracy: 0.5229 - val_loss: 1.0994 - learning_rate: 0.0010
+Epoch 23/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m1s[0m 28ms/step - accuracy: 0.8125 - loss: 0.5896
+[1m23/57[0m [32m━━━━━━━━[0m[37m━━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7692 - loss: 0.6205 
+[1m46/57[0m [32m━━━━━━━━━━━━━━━━[0m[37m━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7659 - loss: 0.6188
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.7552 - loss: 0.6349 - val_accuracy: 0.5098 - val_loss: 1.1104 - learning_rate: 0.0010
+Epoch 24/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m1s[0m 26ms/step - accuracy: 0.7812 - loss: 0.6495
+[1m24/57[0m [32m━━━━━━━━[0m[37m━━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7656 - loss: 0.6394 
+[1m49/57[0m [32m━━━━━━━━━━━━━━━━━[0m[37m━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7649 - loss: 0.6280
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.7624 - loss: 0.6288 - val_accuracy: 0.5294 - val_loss: 1.1109 - learning_rate: 0.0010
+Epoch 25/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m1s[0m 30ms/step - accuracy: 0.8125 - loss: 0.6580
+[1m24/57[0m [32m━━━━━━━━[0m[37m━━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7674 - loss: 0.5898 
+[1m45/57[0m [32m━━━━━━━━━━━━━━━[0m[37m━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7701 - loss: 0.5818
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 4ms/step - accuracy: 0.7728 - loss: 0.5810 - val_accuracy: 0.5425 - val_loss: 1.0944 - learning_rate: 0.0010
+Epoch 26/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m1s[0m 28ms/step - accuracy: 0.8125 - loss: 0.5400
+[1m25/57[0m [32m━━━━━━━━[0m[37m━━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7760 - loss: 0.5997 
+[1m49/57[0m [32m━━━━━━━━━━━━━━━━━[0m[37m━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7773 - loss: 0.5927
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.7706 - loss: 0.5968 - val_accuracy: 0.5556 - val_loss: 1.1195 - learning_rate: 0.0010
+Epoch 27/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m6s[0m 120ms/step - accuracy: 0.6875 - loss: 0.6029
+[1m24/57[0m [32m━━━━━━━━[0m[37m━━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7457 - loss: 0.6176  
+[1m48/57[0m [32m━━━━━━━━━━━━━━━━[0m[37m━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7609 - loss: 0.6044
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.7728 - loss: 0.5897 - val_accuracy: 0.5556 - val_loss: 1.0930 - learning_rate: 0.0010
+Epoch 28/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m6s[0m 118ms/step - accuracy: 0.7812 - loss: 0.7290
+[1m24/57[0m [32m━━━━━━━━[0m[37m━━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.8016 - loss: 0.5746  
+[1m48/57[0m [32m━━━━━━━━━━━━━━━━[0m[37m━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7996 - loss: 0.5626
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.7866 - loss: 0.5714 - val_accuracy: 0.5882 - val_loss: 1.0924 - learning_rate: 0.0010
+Epoch 29/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m1s[0m 27ms/step - accuracy: 0.7812 - loss: 0.6540
+[1m24/57[0m [32m━━━━━━━━[0m[37m━━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7778 - loss: 0.5844 
+[1m48/57[0m [32m━━━━━━━━━━━━━━━━[0m[37m━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7828 - loss: 0.5704
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 4ms/step - accuracy: 0.7899 - loss: 0.5532 - val_accuracy: 0.5621 - val_loss: 1.0894 - learning_rate: 0.0010
+Epoch 30/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m2s[0m 43ms/step - accuracy: 0.8438 - loss: 0.4698
+[1m25/57[0m [32m━━━━━━━━[0m[37m━━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7916 - loss: 0.5431 
+[1m49/57[0m [32m━━━━━━━━━━━━━━━━━[0m[37m━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7933 - loss: 0.5443
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.7882 - loss: 0.5559 - val_accuracy: 0.5752 - val_loss: 1.1032 - learning_rate: 0.0010
+Epoch 31/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m1s[0m 27ms/step - accuracy: 0.7812 - loss: 0.8248
+[1m25/57[0m [32m━━━━━━━━[0m[37m━━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7705 - loss: 0.6225 
+[1m50/57[0m [32m━━━━━━━━━━━━━━━━━[0m[37m━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7762 - loss: 0.5999
+Epoch 31: ReduceLROnPlateau reducing learning rate to 0.0005000000237487257.
+
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.7811 - loss: 0.5793 - val_accuracy: 0.5621 - val_loss: 1.1085 - learning_rate: 0.0010
+Epoch 32/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m1s[0m 27ms/step - accuracy: 0.7500 - loss: 0.7181
+[1m24/57[0m [32m━━━━━━━━[0m[37m━━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7787 - loss: 0.5629 
+[1m48/57[0m [32m━━━━━━━━━━━━━━━━[0m[37m━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7926 - loss: 0.5436
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.8036 - loss: 0.5244 - val_accuracy: 0.5686 - val_loss: 1.0937 - learning_rate: 5.0000e-04
+Epoch 33/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m1s[0m 27ms/step - accuracy: 0.8438 - loss: 0.5423
+[1m26/57[0m [32m━━━━━━━━━[0m[37m━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7947 - loss: 0.5545 
+[1m50/57[0m [32m━━━━━━━━━━━━━━━━━[0m[37m━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7966 - loss: 0.5460
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.7954 - loss: 0.5418 - val_accuracy: 0.5621 - val_loss: 1.1116 - learning_rate: 5.0000e-04
+Epoch 34/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m1s[0m 29ms/step - accuracy: 0.7812 - loss: 0.6905
+[1m23/57[0m [32m━━━━━━━━[0m[37m━━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7977 - loss: 0.5679 
+[1m45/57[0m [32m━━━━━━━━━━━━━━━[0m[37m━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.8001 - loss: 0.5527
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.8003 - loss: 0.5428 - val_accuracy: 0.5621 - val_loss: 1.1042 - learning_rate: 5.0000e-04
+Epoch 35/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m1s[0m 26ms/step - accuracy: 0.7500 - loss: 0.5560
+[1m26/57[0m [32m━━━━━━━━━[0m[37m━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7792 - loss: 0.5347 
+[1m51/57[0m [32m━━━━━━━━━━━━━━━━━[0m[37m━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7834 - loss: 0.5294
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.7877 - loss: 0.5227 - val_accuracy: 0.5686 - val_loss: 1.1049 - learning_rate: 5.0000e-04
+Epoch 36/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m6s[0m 125ms/step - accuracy: 0.7812 - loss: 0.6831
+[1m23/57[0m [32m━━━━━━━━[0m[37m━━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7869 - loss: 0.5637  
+[1m46/57[0m [32m━━━━━━━━━━━━━━━━[0m[37m━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7946 - loss: 0.5410
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.7954 - loss: 0.5253 - val_accuracy: 0.5686 - val_loss: 1.1206 - learning_rate: 5.0000e-04
+Epoch 37/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m1s[0m 28ms/step - accuracy: 0.7812 - loss: 0.6649
+[1m25/57[0m [32m━━━━━━━━[0m[37m━━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7803 - loss: 0.5674 
+[1m49/57[0m [32m━━━━━━━━━━━━━━━━━[0m[37m━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7918 - loss: 0.5487
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.8042 - loss: 0.5203 - val_accuracy: 0.5686 - val_loss: 1.1015 - learning_rate: 5.0000e-04
+Epoch 38/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m1s[0m 29ms/step - accuracy: 0.7812 - loss: 0.4745
+[1m24/57[0m [32m━━━━━━━━[0m[37m━━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.8011 - loss: 0.5384 
+[1m45/57[0m [32m━━━━━━━━━━━━━━━[0m[37m━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.8123 - loss: 0.5184
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.8207 - loss: 0.4945 - val_accuracy: 0.5621 - val_loss: 1.1461 - learning_rate: 5.0000e-04
+Epoch 39/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m6s[0m 111ms/step - accuracy: 0.7812 - loss: 0.6361
+[1m24/57[0m [32m━━━━━━━━[0m[37m━━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.8014 - loss: 0.5502  
+[1m48/57[0m [32m━━━━━━━━━━━━━━━━[0m[37m━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.8055 - loss: 0.5237
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.8108 - loss: 0.4946 - val_accuracy: 0.5817 - val_loss: 1.1188 - learning_rate: 5.0000e-04
+Epoch 40/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m1s[0m 27ms/step - accuracy: 0.7188 - loss: 0.6538
+[1m25/57[0m [32m━━━━━━━━[0m[37m━━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7911 - loss: 0.5310 
+[1m49/57[0m [32m━━━━━━━━━━━━━━━━━[0m[37m━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7984 - loss: 0.5150
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.7998 - loss: 0.5131 - val_accuracy: 0.5686 - val_loss: 1.1166 - learning_rate: 5.0000e-04
+Epoch 41/300
+
+[1m 1/57[0m [37m━━━━━━━━━━━━━━━━━━━━[0m [1m1s[0m 27ms/step - accuracy: 0.8125 - loss: 0.5330
+[1m26/57[0m [32m━━━━━━━━━[0m[37m━━━━━━━━━━━[0m [1m0s[0m 2ms/step - accuracy: 0.7992 - loss: 0.4787 
+[1m51/57[0m [32m━━━━━━━━━━━━━━━━━[0m[37m━━━[0m [1m0s[0m 2ms/step - accuracy: 0.8068 - loss: 0.4802
+Epoch 41: ReduceLROnPlateau reducing learning rate to 0.0002500000118743628.
+
+[1m57/57[0m [32m━━━━━━━━━━━━━━━━━━━━[0m[37m[0m [1m0s[0m 3ms/step - accuracy: 0.8097 - loss: 0.4923 - val_accuracy: 0.5752 - val_loss: 1.1295 - learning_rate: 5.0000e-04
+Epoch 41: early stopping
+Restoring model weights from the end of the best epoch: 21.
+
+✅ Huấn luyện hoàn tất sau 41 epoch
+   Best epoch: 21
+   Best val_loss: 1.0749
+   Best val_accuracy: 0.5359
+
+======================================================================
+MÔ HÌNH 2: MLP (scikit-learn - MLPClassifier)
+======================================================================
+
+📐 Cấu hình MLP:
+   Hidden layers      : (256, 128, 64)
+   Activation         : relu — max(0, x)
+   Solver             : adam
+   Learning rate      : adaptive (init=0.001)
+   L2 Regularization  : alpha=0.001
+   Batch size         : 32
+   Early Stopping     : True (patience=20)
+   Max iterations     : 500
+
+🚀 Bắt đầu huấn luyện MLP...
+Iteration 1, loss = 1.22160915
+Validation score: 0.619048
+Iteration 2, loss = 0.78519459
+Validation score: 0.714286
+Iteration 3, loss = 0.63104649
+Validation score: 0.776557
+Iteration 4, loss = 0.53586983
+Validation score: 0.783883
+Iteration 5, loss = 0.48453788
+Validation score: 0.794872
+Iteration 6, loss = 0.44282741
+Validation score: 0.780220
+Iteration 7, loss = 0.41277547
+Validation score: 0.820513
+Iteration 8, loss = 0.37561097
+Validation score: 0.802198
+Iteration 9, loss = 0.36941121
+Validation score: 0.805861
+Iteration 10, loss = 0.32234436
+Validation score: 0.816850
+Iteration 11, loss = 0.31137324
+Validation score: 0.827839
+Iteration 12, loss = 0.30861286
+Validation score: 0.813187
+Iteration 13, loss = 0.30072405
+Validation score: 0.820513
+Iteration 14, loss = 0.26948033
+Validation score: 0.824176
+Iteration 15, loss = 0.25827007
+Validation score: 0.824176
+Iteration 16, loss = 0.24468288
+Validation score: 0.813187
+Iteration 17, loss = 0.24082006
+Validation score: 0.813187
+Iteration 18, loss = 0.21783792
+Validation score: 0.820513
+Iteration 19, loss = 0.22334972
+Validation score: 0.820513
+Iteration 20, loss = 0.20662478
+Validation score: 0.831502
+Iteration 21, loss = 0.20869761
+Validation score: 0.827839
+Iteration 22, loss = 0.19140863
+Validation score: 0.831502
+Iteration 23, loss = 0.17791226
+Validation score: 0.827839
+Iteration 24, loss = 0.19494025
+Validation score: 0.827839
+Iteration 25, loss = 0.16435583
+Validation score: 0.831502
+Iteration 26, loss = 0.16142554
+Validation score: 0.820513
+Iteration 27, loss = 0.14792724
+Validation score: 0.816850
+Iteration 28, loss = 0.16125912
+Validation score: 0.846154
+Iteration 29, loss = 0.14231707
+Validation score: 0.842491
+Iteration 30, loss = 0.14313561
+Validation score: 0.857143
+Iteration 31, loss = 0.12378561
+Validation score: 0.838828
+Iteration 32, loss = 0.13443346
+Validation score: 0.853480
+Iteration 33, loss = 0.11486868
+Validation score: 0.824176
+Iteration 34, loss = 0.10996024
+Validation score: 0.846154
+Iteration 35, loss = 0.10596555
+Validation score: 0.831502
+Iteration 36, loss = 0.10886000
+Validation score: 0.831502
+Iteration 37, loss = 0.09050487
+Validation score: 0.846154
+Iteration 38, loss = 0.09268826
+Validation score: 0.857143
+Iteration 39, loss = 0.09794420
+Validation score: 0.820513
+Iteration 40, loss = 0.08194694
+Validation score: 0.846154
+Iteration 41, loss = 0.09358466
+Validation score: 0.846154
+Iteration 42, loss = 0.09137420
+Validation score: 0.838828
+Iteration 43, loss = 0.07962246
+Validation score: 0.846154
+Iteration 44, loss = 0.07686003
+Validation score: 0.857143
+Iteration 45, loss = 0.06865082
+Validation score: 0.838828
+Iteration 46, loss = 0.08462598
+Validation score: 0.838828
+Iteration 47, loss = 0.07410492
+Validation score: 0.846154
+Iteration 48, loss = 0.07529484
+Validation score: 0.849817
+Iteration 49, loss = 0.05024195
+Validation score: 0.831502
+Iteration 50, loss = 0.06027655
+Validation score: 0.846154
+Iteration 51, loss = 0.04601858
+Validation score: 0.849817
+Validation score did not improve more than tol=0.000100 for 20 consecutive epochs. Stopping.
+
+✅ Huấn luyện hoàn tất sau 51 epoch
+   Best val_score: 0.8571
+
+======================================================================
+MÔ HÌNH 3: XGBoost (Extreme Gradient Boosting)
+======================================================================
+
+📐 Cấu hình XGBoost:
+   n_estimators        : 500 (max), early_stopping_rounds: 20
+   max_depth           : 6
+   learning_rate (η)   : 0.05 — shrinkage factor
+   subsample           : 0.8 (Stochastic Gradient Boosting)
+   colsample_bytree    : 0.8
+   Regularization      : gamma=0.1, L1(alpha)=0.1, L2(lambda)=1.0
+   min_child_weight    : 3
+
+🚀 Bắt đầu huấn luyện XGBoost...
+[0]	validation_0-mlogloss:1.71109	validation_1-mlogloss:1.75072
+[20]	validation_0-mlogloss:0.88311	validation_1-mlogloss:1.32129
+[40]	validation_0-mlogloss:0.56520	validation_1-mlogloss:1.13012
+[60]	validation_0-mlogloss:0.40394	validation_1-mlogloss:1.03397
+[80]	validation_0-mlogloss:0.30583	validation_1-mlogloss:0.98032
+[100]	validation_0-mlogloss:0.24336	validation_1-mlogloss:0.95403
+[120]	validation_0-mlogloss:0.19980	validation_1-mlogloss:0.94051
+[140]	validation_0-mlogloss:0.16846	validation_1-mlogloss:0.94261
+[144]	validation_0-mlogloss:0.16328	validation_1-mlogloss:0.94446
+
+✅ Huấn luyện hoàn tất!
+   Best iteration: 124
+   Best val_mlogloss: 0.9385
+
+
+📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊
+  PHẦN 3: ĐÁNH GIÁ TOÀN DIỆN TRÊN TEST SET
+📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊📊
+
+======================================================================
+PHẦN 3: BÁO CÁO ĐÁNH GIÁ TOÀN DIỆN
+======================================================================
+
+──────────────────────────────────────────────────
+📊 Deep ANN (TensorFlow)
+──────────────────────────────────────────────────
+   Accuracy           : 0.4118
+   Balanced Accuracy  : 0.2986
+   Macro Precision    : 0.2651
+   Macro Recall       : 0.2986
+   Macro F1-Score     : 0.2621
+   Weighted F1-Score  : 0.4477
+
+   Classification Report:
+              precision    recall  f1-score   support
+
+          Q3       0.00      0.00      0.00         1
+          Q4       0.00      0.00      0.00         5
+          Q5       0.63      0.49      0.55        65
+          Q6       0.50      0.35      0.42        62
+          Q7       0.30      0.44      0.36        18
+          Q8       0.17      0.50      0.25         2
+
+    accuracy                           0.41       153
+   macro avg       0.27      0.30      0.26       153
+weighted avg       0.51      0.41      0.45       153
+
+
+──────────────────────────────────────────────────
+📊 MLP (scikit-learn)
+──────────────────────────────────────────────────
+   Accuracy           : 0.4575
+   Balanced Accuracy  : 0.2234
+   Macro Precision    : 0.2346
+   Macro Recall       : 0.2234
+   Macro F1-Score     : 0.2286
+   Weighted F1-Score  : 0.4682
+
+   Classification Report:
+              precision    recall  f1-score   support
+
+          Q3       0.00      0.00      0.00         1
+          Q4       0.00      0.00      0.00         5
+          Q5       0.59      0.52      0.55        65
+          Q6       0.47      0.48      0.48        62
+          Q7       0.35      0.33      0.34        18
+          Q8       0.00      0.00      0.00         2
+
+    accuracy                           0.46       153
+   macro avg       0.23      0.22      0.23       153
+weighted avg       0.48      0.46      0.47       153
+
+
+──────────────────────────────────────────────────
+📊 XGBoost
+──────────────────────────────────────────────────
+   Accuracy           : 0.4902
+   Balanced Accuracy  : 0.3300
+   Macro Precision    : 0.3251
+   Macro Recall       : 0.3300
+   Macro F1-Score     : 0.3246
+   Weighted F1-Score  : 0.5032
+
+   Classification Report:
+              precision    recall  f1-score   support
+
+          Q3       0.00      0.00      0.00         1
+          Q4       0.00      0.00      0.00         5
+          Q5       0.67      0.60      0.63        65
+          Q6       0.48      0.44      0.46        62
+          Q7       0.30      0.44      0.36        18
+          Q8       0.50      0.50      0.50         2
+
+    accuracy                           0.49       153
+   macro avg       0.33      0.33      0.32       153
+weighted avg       0.52      0.49      0.50       153
+
+
+======================================================================
+📈 BẢNG SO SÁNH TỔNG HỢP
+======================================================================
+Metric                    |     Deep ANN |          MLP |      XGBoost
+──────────────────────────────────────────────────────────────────────
+Accuracy                  |    0.4118    |    0.4575    |    0.4902 🏆
+Balanced Accuracy         |    0.2986    |    0.2234    |    0.3300 🏆
+Macro Precision           |    0.2651    |    0.2346    |    0.3251 🏆
+Macro Recall              |    0.2986    |    0.2234    |    0.3300 🏆
+Macro F1-Score            |    0.2621    |    0.2286    |    0.3246 🏆
+Weighted F1-Score         |    0.4477    |    0.4682    |    0.5032 🏆
+
+🏆 MÔ HÌNH CHIẾN THẮNG: XGBoost
+   (Dựa trên Weighted F1-Score: 0.5032)
+
+
+🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨
+  TẠO BIỂU ĐỒ TRỰC QUAN HÓA
+🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨🎨
+
+📊 Đã lưu Learning Curves: d:\WORKSAPCE\Wine_AI\output\learning_curves.png
+📊 Đã lưu Confusion Matrices: d:\WORKSAPCE\Wine_AI\output\confusion_matrices.png
+📊 Đã lưu Metrics Comparison: d:\WORKSAPCE\Wine_AI\output\metrics_comparison.png
+📊 Đã lưu Feature Importance: d:\WORKSAPCE\Wine_AI\output\feature_importance.png
+
+
+📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝
+  PHẦN 4: TẠO BÁO CÁO TỔNG HỢP (TIẾNG VIỆT)
+📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝📝
+
+📝 Đã lưu báo cáo: d:\WORKSAPCE\Wine_AI\report.md
+
+
+✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅
+  HOÀN TẤT TOÀN BỘ PIPELINE!
+✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅
+
+📂 Kết quả đầu ra đã được lưu tại: d:\WORKSAPCE\Wine_AI\output
+   - learning_curves.png    (Đường cong học tập — Loss & Accuracy)
+   - confusion_matrices.png (Ma trận nhầm lẫn — 3 mô hình)
+   - metrics_comparison.png (So sánh chỉ số — biểu đồ cột)
+   - feature_importance.png (Tầm quan trọng đặc trưng — XGBoost)
+   - ../report.md           (Báo cáo tổng hợp — Tiếng Việt)
+
+🏆 KẾT LUẬN: XGBoost chiến thắng với Weighted F1 = 0.5032
+🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷🍷

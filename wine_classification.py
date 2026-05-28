@@ -22,6 +22,24 @@ import sys
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
 
+# Cấu hình lưu output từ terminal vào file (ghi đè mỗi lần chạy)
+class Logger:
+    def __init__(self, filename="terminal_output.txt"):
+        self.terminal = sys.stdout
+        self.log = open(filename, "w", encoding="utf-8")
+
+    def write(self, message):
+        self.terminal.write(message)
+        self.log.write(message)
+
+    def flush(self):
+        self.terminal.flush()
+        if not self.log.closed:
+            self.log.flush()
+
+sys.stdout = Logger()
+sys.stderr = sys.stdout
+
 import warnings
 import numpy as np
 import pandas as pd
